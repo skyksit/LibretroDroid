@@ -174,7 +174,7 @@ int Input::convertAndroidToLibretroKey(int keyCode) const {
         case AKEYCODE_DPAD_DOWN_LEFT:
             return Input::RETRO_DEVICE_ID_JOYPAD_DOWN_LEFT;
         default:
-            return UNKNOWN_KEY;
+            return keyCode;
     }
 }
 

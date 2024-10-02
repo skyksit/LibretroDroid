@@ -1,8 +1,11 @@
 app/.externalNativeBuild
 app/build
 app/*.iml
+app/.DS_Store
 .google
 .gradle
 .idea
 *.iml
 local.properties
+.DS_Store
+libretrodroid/.DS_Store

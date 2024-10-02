@@ -148,6 +148,9 @@ class GLRetroView(
     fun setCheat(index : Int, enable : Boolean, code : String) = runOnGLThread {
         LibretroDroid.setCheat(index, enable, code)
     }
+    fun resetCheat() = runOnGLThread {
+        LibretroDroid.resetCheat()
+    }
 
     fun unserializeState(data: ByteArray): Boolean = runOnGLThread {
         LibretroDroid.unserializeState(data)
