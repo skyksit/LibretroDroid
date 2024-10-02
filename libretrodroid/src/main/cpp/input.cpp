@@ -126,6 +126,10 @@ int16_t Input::getInputState(unsigned port, unsigned device, unsigned index, uns
             }
         }
 
+        case RETRO_DEVICE_KEYBOARD: {
+            return anyPressed(port, id);
+        }
+
         default:
             return 0;
     }
