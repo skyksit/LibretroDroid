@@ -59,6 +59,10 @@ class GLRetroView(
         LibretroDroid.setShaderConfig(buildShader(value))
     }
 
+    var slowSpeed: Float by Delegates.observable(1f) { _, _, value ->
+        LibretroDroid.setSlow(value)
+    }
+
     private val openGLESVersion: Int
 
     private var isGameLoaded = false
