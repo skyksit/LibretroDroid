@@ -35,12 +35,14 @@ public:
     unsigned advanceFrames();
     void wait();
     double getTimeStretchFactor();
+    void setSlowFactor(double factor);
 private:
 
     double screenRefreshRate;
     double contentRefreshRate;
     bool useVSync;
     const double FPS_TOLERANCE = 5;
+    double slowFactor = 1.0;
 
     const TimePoint MIN_TIME = TimePoint::min();
     void start();

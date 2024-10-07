@@ -30,7 +30,10 @@ unsigned FPSSync::advanceFrames() {
 
     auto now = std::chrono::steady_clock::now();
     auto frames = std::max(static_cast<long long>((now - lastFrame) / (sampleInterval * slowFactor)), 1LL);
-    lastFrame += sampleInterval * frames * slowFactor;
+
+    // Calculate duration to add
+    auto timeToAdd = std::chrono::duration_cast<std::chrono::steady_clock::duration>(sampleInterval * frames * slowFactor);
+    lastFrame += timeToAdd;  // Add duration to lastFrame
 
     return frames;
 }

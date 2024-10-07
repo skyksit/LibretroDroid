@@ -10,7 +10,7 @@ group='com.github.skyksit'
 
 android {
     compileSdkVersion 34
-    buildToolsVersion "29.0.3"
+    buildToolsVersion "30.0.2"
 
     defaultConfig {
         minSdk 21
@@ -49,9 +49,9 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.5.1'
 
-    testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'
+//    testImplementation 'junit:junit:4.13.2'
+//    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
+//    androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'
 }
 
 afterEvaluate {
@@ -61,13 +61,13 @@ afterEvaluate {
                 from components.release
                 groupId = 'com.github.skyksit'
                 artifactId = 'libretrodroid'
-                version = '1.0'
+                version = '0.3.0'
             }
             debug(MavenPublication) {
                 from components.debug
                 groupId = 'com.github.skyksit'
                 artifactId = 'libretrodroid'
-                version = '1.0'
+                version = '0.3.0'
             }
         }
     }
