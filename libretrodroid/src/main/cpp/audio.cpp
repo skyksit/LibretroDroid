@@ -105,9 +105,16 @@ void Audio::setPlaybackSpeed(const double newPlaybackSpeed) {
     playbackSpeed = newPlaybackSpeed;
 }
 
+void Audio::setSampleRateMultiplier(double multiplier) {
+    if (multiplier <= 0) {
+        return;
+    }
+    sampleRateMultiplier = multiplier;
+}
+
 oboe::DataCallbackResult Audio::onAudioReady(oboe::AudioStream *oboeStream, void *audioData, int32_t numFrames) {
     double dynamicBufferFactor = computeDynamicBufferConversionFactor(0.001 * numFrames);
-    double finalConversionFactor = baseConversionFactor * dynamicBufferFactor * playbackSpeed;
+    double finalConversionFactor = baseConversionFactor * dynamicBufferFactor * playbackSpeed * sampleRateMultiplier;
 
     // When using low-latency stream, numFrames is very low (~100) and the dynamic buffer scaling doesn't work with rounding.
     // By keeping track of the "fractional" frames we can keep the error smaller.

@@ -109,6 +109,7 @@ public class LibretroDroid {
 
     public static native void setRumbleEnabled(boolean enabled);
     public static native void setFrameSpeed(int speed);
+    public static native void setSlow(float factor);
     public static native void setAudioEnabled(boolean enabled);
     public static native void setShaderConfig(GLRetroShader shader);
 

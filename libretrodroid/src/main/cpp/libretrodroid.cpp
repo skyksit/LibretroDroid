@@ -84,6 +84,7 @@ int16_t LibretroDroid::callback_set_input_state(
 void LibretroDroid::updateAudioSampleRateMultiplier() {
     if (audio) {
         audio->setPlaybackSpeed(frameSpeed);
+        audio->setSampleRateMultiplier(slowFactor);
     }
 }
 
@@ -313,8 +314,6 @@ void LibretroDroid::loadGameFromPath(const std::string& gamePath) {
 }
 
 void LibretroDroid::loadGameFromBytes(const int8_t *data, size_t size) {
-    LOGD("Performing libretrodroid loadGameFromBytes");
-
     struct retro_system_info system_info {};
     core->retro_get_system_info(&system_info);
 
@@ -340,7 +339,6 @@ void LibretroDroid::loadGameFromBytes(const int8_t *data, size_t size) {
 }
 
 void LibretroDroid::loadGameFromVirtualFiles(std::vector<VFSFile> virtualFiles) {
-    LOGD("Performing libretrodroid loadGameFromVirtualFiles");
     struct retro_system_info system_info {};
     core->retro_get_system_info(&system_info);
 
@@ -381,8 +379,6 @@ void LibretroDroid::loadGameFromVirtualFiles(std::vector<VFSFile> virtualFiles) 
 }
 
 void LibretroDroid::destroy() {
-    LOGD("Performing libretrodroid destroy");
-
     if (Environment::getInstance().getHwContextDestroy() != nullptr) {
         Environment::getInstance().getHwContextDestroy()();
     }
@@ -401,8 +397,6 @@ void LibretroDroid::destroy() {
 }
 
 void LibretroDroid::resume() {
-    LOGD("Performing libretrodroid resume");
-
     input = std::make_unique<Input>();
 
     fpsSync->reset();
@@ -410,15 +404,12 @@ void LibretroDroid::resume() {
 }
 
 void LibretroDroid::pause() {
-    LOGD("Performing libretrodroid pause");
     audio->stop();
 
     input = nullptr;
 }
 
 void LibretroDroid::step() {
-    LOGD("Stepping into retro_run()");
-
     unsigned frames = 1;
     if (fpsSync) {
         unsigned requestedFrames = fpsSync->advanceFrames();
@@ -476,6 +467,17 @@ bool LibretroDroid::isRumbleEnabled() const {
 
 void LibretroDroid::setFrameSpeed(unsigned int speed) {
     frameSpeed = speed;
+    updateAudioSampleRateMultiplier();
+}
+
+void LibretroDroid::setSlow(float factor) {
+    if (factor <= 0) {
+        return;
+    }
+    slowFactor = factor;
+    if (fpsSync) {
+        fpsSync->setSlowFactor(slowFactor);
+    }
     updateAudioSampleRateMultiplier();
 }
 
@@ -565,6 +567,7 @@ void LibretroDroid::afterGameLoad() {
     core->retro_get_system_av_info(&system_av_info);
 
     fpsSync = std::make_unique<FPSSync>(system_av_info.timing.fps, screenRefreshRate);
+    fpsSync->setSlowFactor(slowFactor);
 
     double inputSampleRate = system_av_info.timing.sample_rate * fpsSync->getTimeStretchFactor();
 

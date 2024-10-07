@@ -55,6 +55,7 @@ public:
 public:
     void write(const int16_t *data, size_t frames);
     void setPlaybackSpeed(const double newPlaybackSpeed);
+    void setSampleRateMultiplier(double multiplier);
 
 private:
     static int32_t roundToEven(int32_t x);
@@ -87,6 +88,7 @@ private:
     double errorIntegral = 0.0;
 
     double playbackSpeed = 1.0;
+    double sampleRateMultiplier = 1.0;
 
     std::unique_ptr<AudioLatencySettings> audioLatencySettings;
 };

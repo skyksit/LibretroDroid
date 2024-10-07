@@ -29,8 +29,8 @@ unsigned FPSSync::advanceFrames() {
     }
 
     auto now = std::chrono::steady_clock::now();
-    auto frames = std::max((now - lastFrame) / sampleInterval, (long long) 1);
-    lastFrame = lastFrame + sampleInterval * frames;
+    auto frames = std::max(static_cast<long long>((now - lastFrame) / (sampleInterval * slowFactor)), 1LL);
+    lastFrame += sampleInterval * frames * slowFactor;
 
     return frames;
 }
@@ -40,7 +40,14 @@ FPSSync::FPSSync(double contentRefreshRate, double screenRefreshRate) {
     this->screenRefreshRate = screenRefreshRate;
     this->useVSync = std::abs(contentRefreshRate - screenRefreshRate) < FPS_TOLERANCE;
     this->sampleInterval = std::chrono::microseconds((long) ((1000000L / contentRefreshRate)));
+    this->slowFactor = 1.0;
     reset();
+}
+
+void FPSSync::setSlowFactor(double factor) {
+    if (factor > 0) {
+        slowFactor = factor;
+    }
 }
 
 void FPSSync::start() {

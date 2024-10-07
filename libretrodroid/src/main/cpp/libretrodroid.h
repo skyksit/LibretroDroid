@@ -119,6 +119,7 @@ public:
     void handleRumbleUpdates(const std::function<void(int, float, float)> &handler);
 
     void setFrameSpeed(unsigned int speed);
+    void setSlow(float factor);
 
     void setAudioEnabled(bool enabled);
 
@@ -147,6 +148,7 @@ protected:
 
 private:
     unsigned int frameSpeed = 1;
+    float slowFactor = 1.0;
     bool audioEnabled = true;
     bool preferLowLatencyAudio = false;
     bool rumbleEnabled = false;
