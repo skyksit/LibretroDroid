@@ -54,17 +54,11 @@ dependencies {
 afterEvaluate {
     publishing {
         publications {
-            create<MavenPublication>("release") {
+            create("maven-public", MavenPublication::class) {
+                groupId = "com.github.skyksit"
+                artifactId = "libretrodroid"
+                version = "0.10.0"
                 from(components["release"])
-                groupId = "com.github.skyksit"
-                artifactId = "libretrodroid"
-                version = "0.10.0"
-            }
-            create<MavenPublication>("debug") {
-                from(components["debug"])
-                groupId = "com.github.skyksit"
-                artifactId = "libretrodroid"
-                version = "0.10.0"
             }
         }
     }
