@@ -1,5 +1,6 @@
-#before_install:
-#   - yes | sdkmanager "cmake;3.10.2.4988404"
+before_install:
+   - yes | sdkmanager "cmake;3.22.1"
+
 jdk:
    - openjdk17
 
@@ -7,4 +8,4 @@ android:
    components:
       - build-tools;34.0.0
       - platforms;android-34
-      - "cmake;3.18.1"
+      - "cmake;3.22.1"
