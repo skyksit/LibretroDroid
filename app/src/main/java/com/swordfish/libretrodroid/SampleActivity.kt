@@ -18,36 +18,53 @@
 package com.swordfish.libretrodroid
 
 import android.os.Bundle
-import android.util.Log
 import android.view.Gravity
 import android.view.KeyEvent
 import android.view.MotionEvent
+import android.view.ViewTreeObserver
 import android.widget.FrameLayout
 import androidx.appcompat.app.AppCompatActivity
+import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.constraintlayout.widget.ConstraintSet
+import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
-import com.android.libretrodroid.R
 import com.swordfish.radialgamepad.library.RadialGamePad
+import com.swordfish.radialgamepad.library.config.ButtonConfig
+import com.swordfish.radialgamepad.library.config.CrossConfig
+import com.swordfish.radialgamepad.library.config.PrimaryDialConfig
+import com.swordfish.radialgamepad.library.config.RadialGamePadConfig
+import com.swordfish.radialgamepad.library.config.SecondaryDialConfig
 import com.swordfish.radialgamepad.library.event.Event
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
+@AndroidEntryPoint
 class SampleActivity : AppCompatActivity() {
-
-    companion object {
-        private val TAG_LOG = SampleActivity::class.java.simpleName
-    }
-
-    private lateinit var retroView: GLRetroView
+    private lateinit var retroGameView: GLRetroView
 
     private lateinit var leftPad: RadialGamePad
     private lateinit var rightPad: RadialGamePad
 
+    private lateinit var mainContainerLayout: ConstraintLayout
+    private lateinit var gameContainerLayout: FrameLayout
+    private lateinit var leftGamePadContainer: FrameLayout
+    private lateinit var rightGamePadContainer: FrameLayout
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.sample_activity)
+        setContentView(com.skyksit.retro.R.layout.sample_activity)
 
+        mainContainerLayout = findViewById(com.skyksit.retro.R.id.maincontainer)
+        gameContainerLayout = findViewById(com.skyksit.retro.R.id.gamecontainer)
+
+        leftGamePadContainer = findViewById(com.skyksit.retro.R.id.leftgamepad)
+        rightGamePadContainer = findViewById(com.skyksit.retro.R.id.rightgamepad)
+
+        Timber.tag("SampleApp").d("on Created")
         /* Prepare config for GLRetroView */
         val data = GLRetroViewData(this).apply {
             /*
@@ -63,7 +80,7 @@ class SampleActivity : AppCompatActivity() {
              * The path to the ROM to load.
              * Example: /data/data/<package-id>/files/example.gba
              */
-            gameFilePath = "/data/data/<package-id>/files/example.gba"
+            gameFilePath = filesDir.absolutePath + "/FFK.gba"
 
             /*
              * Direct ROM bytes to load.
@@ -108,27 +125,28 @@ class SampleActivity : AppCompatActivity() {
             preferLowLatencyAudio = true
         }
 
+        Timber.tag("SampleApp").d("Game file path: ${filesDir.absolutePath + "/FFK.gba"}")
+
         /* Initialize the main emulator view */
-        retroView = GLRetroView(this, data)
+        retroGameView = GLRetroView(this, data).apply {
+            isFocusable = false
+            isFocusableInTouchMode = false
+        }
 
-        lifecycle.addObserver(retroView)
-
-        /* Get the FrameLayout to house the GLRetroView */
-        val frameLayout = findViewById<FrameLayout>(R.id.gamecontainer)
-
-        /* Add and center the GLRetroView */
-        frameLayout.addView(retroView)
-        retroView.layoutParams = FrameLayout.LayoutParams(
+        retroGameView.layoutParams = FrameLayout.LayoutParams(
             FrameLayout.LayoutParams.WRAP_CONTENT,
             FrameLayout.LayoutParams.WRAP_CONTENT
         ).apply {
             gravity = Gravity.CENTER_HORIZONTAL
         }
 
+        lifecycle.addObserver(retroGameView)
+        gameContainerLayout.addView(retroGameView)
+
         initializeVirtualGamePad()
 
         lifecycleScope.launch {
-            retroView.getRumbleEvents()
+            retroGameView.getRumbleEvents()
                 .flowWithLifecycle(lifecycle, Lifecycle.State.RESUMED)
                 .collect {
                     handleRumbleEvent(it)
@@ -170,23 +188,23 @@ class SampleActivity : AppCompatActivity() {
      * WARNING: This method can override volume key events.
      */
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
-        retroView.sendKeyEvent(event.action, keyCode)
+        retroGameView.sendKeyEvent(event.action, keyCode)
         return super.onKeyDown(keyCode, event)
     }
 
     override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean {
-        retroView.sendKeyEvent(event.action, keyCode)
+        retroGameView.sendKeyEvent(event.action, keyCode)
         return super.onKeyUp(keyCode, event)
     }
 
     private fun sendMotionEvent(
-            event: MotionEvent,
-            source: Int,
-            xAxis: Int,
-            yAxis: Int,
-            port: Int
+        event: MotionEvent,
+        source: Int,
+        xAxis: Int,
+        yAxis: Int,
+        port: Int,
     ) {
-        retroView.sendMotionEvent(
+        retroGameView.sendMotionEvent(
             source,
             event.getAxisValue(xAxis),
             event.getAxisValue(yAxis),
@@ -196,18 +214,174 @@ class SampleActivity : AppCompatActivity() {
 
     private fun handleEvent(event: Event) {
         when (event) {
-            is Event.Button -> retroView.sendKeyEvent(event.action, event.id)
-            is Event.Direction -> retroView.sendMotionEvent(event.id, event.xAxis, event.yAxis)
+            is Event.Button -> {
+                when (event.id) {
+                    KeyEvent.KEYCODE_MEDIA_SKIP_FORWARD -> retroGameView.frameSpeed = 5
+                    KeyEvent.KEYCODE_MEDIA_SKIP_BACKWARD -> {
+                        retroGameView.frameSpeed = 1
+                        retroGameView.slowSpeed = 0.8f
+                    }
+                    else -> {
+                        retroGameView.frameSpeed = 1
+                        retroGameView.slowSpeed = 1.0f
+                        retroGameView.sendKeyEvent(event.action, event.id)
+                    }
+                }
+            }
+            is Event.Direction -> retroGameView.sendMotionEvent(event.id, event.xAxis, event.yAxis)
         }
     }
 
     private fun handleRumbleEvent(rumbleEvent: RumbleEvent) {
-        Log.i(TAG_LOG, "Received rumble event: $rumbleEvent")
+        Timber.tag("SampleApp").i("Received rumble event: $rumbleEvent")
     }
 
     private fun initializeVirtualGamePad() {
-        leftPad = RadialGamePad(VirtualGamePadConfigs.RETRO_PAD_LEFT, 8f, this)
-        rightPad = RadialGamePad(VirtualGamePadConfigs.RETRO_PAD_RIGHT, 8f,this)
+        leftGamePadContainer.isVisible = true
+        rightGamePadContainer.isVisible = true
+
+        leftGamePadContainer.viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
+            override fun onGlobalLayout() {
+                // 레이아웃이 완료된 후 좌표 정보를 확인합니다.
+                Timber.tag("SampleApp").d("leftGamePadContainer.left = ${leftGamePadContainer.left}")
+                Timber.tag("SampleApp").d("leftGamePadContainer.top = ${leftGamePadContainer.top}")
+                Timber.tag("SampleApp").d("leftGamePadContainer.right = ${leftGamePadContainer.right}")
+                Timber.tag("SampleApp").d("leftGamePadContainer.bottom = ${leftGamePadContainer.bottom}")
+
+                // 리스너를 제거합니다.
+                leftGamePadContainer.viewTreeObserver.removeOnGlobalLayoutListener(this)
+            }
+        })
+
+
+        val theme = LemuroidTouchOverlayThemes.getGamePadTheme()
+        leftPad = RadialGamePad(
+            RadialGamePadConfig(
+                theme = theme,
+                sockets = 12,
+                primaryDial = PrimaryDialConfig.Cross(CrossConfig(0)),
+                secondaryDials = listOf(
+                    SecondaryDialConfig.SingleButton(
+                        2,
+                        1f,
+                        0f,
+                        ButtonConfig(
+                            id = KeyEvent.KEYCODE_BUTTON_SELECT,
+                            label = "SELECT"
+                        )
+                    ),
+                    SecondaryDialConfig.SingleButton(
+                        3,
+                        1f,
+                        0f,
+                        ButtonConfig(
+                            id = KeyEvent.KEYCODE_MEDIA_SKIP_FORWARD,
+                            label = "FF"
+                        )
+                    ),
+                    SecondaryDialConfig.SingleButton(
+                        4,
+                        1f,
+                        0f,
+                        ButtonConfig(
+                            id = KeyEvent.KEYCODE_MEDIA_SKIP_BACKWARD,
+                            label = "Slow"
+                        )
+                    ),
+                    SecondaryDialConfig.Empty(
+                        8,
+                        1,
+                        1f,
+                        0f
+                    ),
+                    // When this stick is double tapped, it's going to fire a Button event
+                    SecondaryDialConfig.Stick(
+                        9,
+                        2,
+                        2.2f,
+                        0.1f,
+                        1,
+                        KeyEvent.KEYCODE_BUTTON_THUMBL,
+                        contentDescription = "Left Stick",
+                        rotationProcessor = object : SecondaryDialConfig.RotationProcessor() {
+                            override fun getRotation(rotation: Float): Float {
+                                return rotation - 10f
+                            }
+                        }
+                    )
+                )
+            )
+            , 16f, this)
+        rightPad = RadialGamePad(
+            RadialGamePadConfig(
+                theme = theme,
+                sockets = 12,
+                primaryDial = PrimaryDialConfig.PrimaryButtons(
+                    listOf(
+                        ButtonConfig(
+                            id = KeyEvent.KEYCODE_BUTTON_A,
+                            label = "A",
+                            contentDescription = "Circle"
+                        ),
+                        ButtonConfig(
+                            id = KeyEvent.KEYCODE_BUTTON_X,
+                            label = "X",
+                            contentDescription = "Triangle"
+                        ),
+                        ButtonConfig(
+                            id = KeyEvent.KEYCODE_BUTTON_Y,
+                            label = "Y",
+                            contentDescription = "Square"
+                        ),
+                        ButtonConfig(
+                            id = KeyEvent.KEYCODE_BUTTON_B,
+                            label = "B",
+                            contentDescription = "Cross"
+                        )
+                    )
+                ),
+                secondaryDials = listOf(
+                    SecondaryDialConfig.DoubleButton(
+                        2,
+                        0f,
+                        ButtonConfig(
+                            id = KeyEvent.KEYCODE_BUTTON_R1,
+                            label = "R"
+                        )
+                    ),
+                    SecondaryDialConfig.SingleButton(
+                        4,
+                        1f,
+                        0f,
+                        ButtonConfig(
+                            id = KeyEvent.KEYCODE_BUTTON_START,
+                            label = "START"
+                        )
+                    ),
+                    SecondaryDialConfig.SingleButton(
+                        10,
+                        1f,
+                        -0.1f,
+                        ButtonConfig(
+                            id = KeyEvent.KEYCODE_BUTTON_MODE,
+                            label = "MENU"
+                        )
+                    ),
+                    // When this stick is double tapped, it's going to fire a Button event
+//                    SecondaryDialConfig.Cross(
+//                        8,
+//                        2,
+//                        2.2f,
+//                        0.1f,
+//                        CrossConfig(0),
+//                        rotationProcessor = object : SecondaryDialConfig.RotationProcessor() {
+//                            override fun getRotation(rotation: Float): Float {
+//                                return rotation + 8f
+//                            }
+//                        }
+//                    )
+                )
+            ), 16f,this)
 
         // We want the pad anchored to the bottom of the screen
         leftPad.gravityX = -1f
@@ -216,8 +390,8 @@ class SampleActivity : AppCompatActivity() {
         rightPad.gravityX = 1f
         rightPad.gravityY = 1f
 
-        findViewById<FrameLayout>(R.id.leftcontainer).addView(leftPad)
-        findViewById<FrameLayout>(R.id.rightcontainer).addView(rightPad)
+        leftGamePadContainer.addView(leftPad)
+        rightGamePadContainer.addView(rightPad)
 
         lifecycleScope.launch {
             merge(leftPad.events(), rightPad.events())

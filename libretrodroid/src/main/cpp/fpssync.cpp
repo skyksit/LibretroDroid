@@ -49,7 +49,7 @@ FPSSync::FPSSync(double contentRefreshRate, double screenRefreshRate) {
 
 void FPSSync::setSlowFactor(double factor) {
     if (factor > 0) {
-        slowFactor = factor;
+        slowFactor = 1 / factor;
     }
 }
 

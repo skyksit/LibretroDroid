@@ -1,6 +1,7 @@
 package com.swordfish.libretrodroid
 
 import android.view.KeyEvent
+import com.swordfish.libretrodroid.LemuroidTouchOverlayThemes.getGamePadTheme
 import com.swordfish.radialgamepad.library.config.ButtonConfig
 import com.swordfish.radialgamepad.library.config.CrossConfig
 import com.swordfish.radialgamepad.library.config.PrimaryDialConfig
