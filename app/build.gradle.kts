@@ -48,11 +48,11 @@ dependencies {
     implementation ("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation ("com.github.swordfish90:radialgamepad:2.0.0")
     // timber log
-    implementation (libs.timber)
-    implementation(libs.material)
+    implementation ("com.jakewharton.timber:timber:5.0.1")
+    implementation ("com.google.android.material:material:1.12.0")
     // Dagger Hilt
-    implementation (libs.dagger.hilt.android)
-    ksp (libs.dagger.hilt.compiler)
-    ksp (libs.kotlinx.metadata.jvm)
-    ksp (libs.dagger.hilt.android.compiler)
+    implementation ("com.google.dagger:hilt-android:2.51")
+    ksp ("com.google.dagger:hilt-compiler:2.51")
+    ksp ("org.jetbrains.kotlinx:kotlinx-metadata-jvm:0.8.0")
+    ksp ("com.google.dagger:hilt-android-compiler:2.51")
 }
