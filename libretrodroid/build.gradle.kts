@@ -58,13 +58,13 @@ afterEvaluate {
                 from(components["release"])
                 groupId = "com.github.skyksit"
                 artifactId = "libretrodroid"
-                version = "0.3.0"
+                version = "0.10.0"
             }
             create<MavenPublication>("debug") {
                 from(components["debug"])
                 groupId = "com.github.skyksit"
                 artifactId = "libretrodroid"
-                version = "0.3.0"
+                version = "0.10.0"
             }
         }
     }
